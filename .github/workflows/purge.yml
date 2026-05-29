@@ -1,0 +1,23 @@
+name: Purge jsDelivr cache
+
+# index.json이 main에 푸시되면 jsDelivr 글로벌 CDN 캐시를 즉시 무효화한다.
+# - 워치페이스 JSON/PNG는 URL에 v가 박혀있어 영구 캐시되므로 purge 불필요.
+# - index.json만 신선도를 보장해주면 앱이 최신 워치페이스 목록을 받을 수 있다.
+on:
+    push:
+        branches: [main]
+        paths: ['index.json']
+    workflow_dispatch:           # Actions 탭에서 수동 실행 가능 (디버깅용)
+
+jobs:
+    purge:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Purge jsDelivr cache for index.json
+              run: |
+                  echo "Repository: ${{ github.repository }}"
+                  echo "Target:     https://cdn.jsdelivr.net/gh/${{ github.repository }}@main/index.json"
+                  echo ""
+                  curl -fsS --retry 3 --retry-delay 5 \
+                      -w "\nHTTP %{http_code}\n" \
+                      "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/index.json"
